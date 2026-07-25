@@ -50,6 +50,55 @@ export const IMAGES = {
   'decoy:hydrant': [], 'decoy:tree': [], 'decoy:building': [], 'decoy:shop': [], 'decoy:bench': [],
 }
 
+// ---------------------------------------------------------------------------
+// HONEST LABELLING
+// ---------------------------------------------------------------------------
+// A mislabeled image doesn't crash anything — it silently makes a rule wrong,
+// which is the one bug this game cannot afford (tiers I-IV have to be fair). So
+// every file gets a record here saying which signature it depicts and the prompt
+// it came from, and `validateManifest()` cross-checks it against IMAGES.
+// Record shape: { file, signature, prompt }
+export const MANIFEST = []
+
+// Every signature the tile generators can produce. IMAGES must cover all of them
+// (an empty array is fine — that signature just renders placeholder art).
+export const REQUIRED_SIGNATURES = [
+  'crosswalk:none', 'crosswalk:walk', 'crosswalk:dont',
+  'light:red', 'light:yellow', 'light:green',
+  'vehicle:bus', 'vehicle:shuttle', 'vehicle:car', 'vehicle:bike', 'vehicle:moto',
+  'decoy:hydrant', 'decoy:tree', 'decoy:building', 'decoy:shop', 'decoy:bench',
+]
+
+export function validateManifest() {
+  const errors = []
+  for (const sig of REQUIRED_SIGNATURES) {
+    if (!IMAGES[sig]) errors.push(`IMAGES is missing the signature "${sig}"`)
+  }
+  for (const sig of Object.keys(IMAGES)) {
+    if (!REQUIRED_SIGNATURES.includes(sig)) errors.push(`IMAGES has unknown signature "${sig}"`)
+  }
+  const declared = new Map(MANIFEST.map((m) => [m.file, m]))
+  for (const [sig, files] of Object.entries(IMAGES)) {
+    for (const f of files) {
+      const rec = declared.get(f)
+      if (!rec) errors.push(`"${f}" is used for ${sig} but has no MANIFEST record`)
+      else if (rec.signature !== sig) errors.push(`"${f}" is filed under ${sig} but MANIFEST says ${rec.signature}`)
+      else if (!rec.prompt) errors.push(`"${f}" has no prompt recorded — labelling can't be checked`)
+    }
+  }
+  for (const rec of MANIFEST) {
+    if (!(IMAGES[rec.signature] || []).includes(rec.file)) {
+      errors.push(`MANIFEST lists "${rec.file}" for ${rec.signature} but IMAGES doesn't use it`)
+    }
+  }
+  // Dynamic lights cross-fade between the same pole in two states, so red and
+  // green have to be generated as matched pairs or the timing rule looks broken.
+  const red = (IMAGES['light:red'] || []).length
+  const green = (IMAGES['light:green'] || []).length
+  if (red !== green) errors.push(`light:red (${red}) and light:green (${green}) must be matched pairs`)
+  return { ok: errors.length === 0, errors }
+}
+
 function variantOf(tile, liveColor) {
   if (tile.cat === 'crosswalk') return `crosswalk:${tile.attrs.signal}`
   if (tile.cat === 'light') return `light:${liveColor || tile.attrs.color}`

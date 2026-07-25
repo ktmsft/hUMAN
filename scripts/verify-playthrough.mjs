@@ -5,6 +5,7 @@ import {
   TIERS, tierAt, RIG_LIMIT, liveAttrs, STEAL_COUNT,
 } from '../src/game/engine.js'
 import { RULES } from '../src/game/rules.js'
+import { validateManifest, pickImage, HAS_IMAGE_PACK, REQUIRED_SIGNATURES, IMAGES } from '../src/game/images.manifest.js'
 
 let fail = 0
 const ok = (cond, msg) => { console.log((cond ? '  PASS ' : '  FAIL ') + msg); if (!cond) fail++ }
@@ -95,6 +96,28 @@ while (guard++ < 500 && !reclassified) {
 ok(tier === TIERS.length - 1, 'a perfect player graduates I -> II -> III and lands on IV')
 ok(reclassified, `a perfect player is robbed ${RIG_LIMIT}x at IV and gets reclassified into V`)
 ok(steals === RIG_LIMIT, 'never graduates IV — only ever leaves by reclassification')
+
+// --- 7. image pack wiring (placeholders today, photoreal when a pack lands)
+console.log('\n[7] image pack')
+const man = validateManifest()
+ok(man.ok, man.ok ? 'manifest is self-consistent' : 'manifest errors: ' + man.errors.join('; '))
+const everySig = new Set()
+for (let t = 0; t < TIERS.length; t++) {
+  for (let n = 0; n < 100; n++) {
+    for (const tile of generateChallenge(t).tiles) {
+      everySig.add(tile.cat === 'crosswalk' ? `crosswalk:${tile.attrs.signal}`
+        : tile.cat === 'light' ? `light:${tile.attrs.color}`
+        : `${tile.cat}:${tile.attrs.kind}`)
+    }
+  }
+}
+const uncovered = [...everySig].filter((s) => !REQUIRED_SIGNATURES.includes(s))
+ok(uncovered.length === 0, uncovered.length ? `signatures with no manifest slot: ${uncovered.join(', ')}` : 'every generated tile signature has a manifest slot')
+ok(HAS_IMAGE_PACK === Object.values(IMAGES).some((a) => a.length > 0), 'HAS_IMAGE_PACK reflects the manifest')
+if (!HAS_IMAGE_PACK) {
+  const t = { cat: 'light', attrs: { color: 'red' } }
+  ok(pickImage(t, 'red') === null, 'with no pack registered, tiles fall back to placeholder art')
+}
 
 console.log(fail === 0 ? '\nALL CHECKS PASSED' : `\n${fail} CHECK(S) FAILED`)
 process.exit(fail === 0 ? 0 : 1)
