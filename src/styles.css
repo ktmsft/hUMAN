@@ -350,3 +350,31 @@ body {
 .toast--pass { border-color: #2e7d4f; background: #17281d; }
 .toast--fail { border-color: #7a3b3b; background: #281a1a; }
 .toast--steal { border-color: #8a6d1e; background: #2a2413; }
+
+/* ---- attribute art: occupancy, hydrant side, motion --------------------- */
+.art__occupant {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -60%);
+  font-size: clamp(20px, 6vw, 30px); filter: drop-shadow(0 2px 3px rgba(0,0,0,.5));
+}
+
+/* hydrant: the POLE is the whole point of the rule, so it must read clearly */
+.art--hydrant { background: #3b4048; position: relative; }
+.hydrant__pole {
+  position: absolute; top: 12%; bottom: 12%; left: 50%; width: 4px;
+  transform: translateX(-50%); border-radius: 2px;
+  background: linear-gradient(#9aa3ad, #6d757f);
+}
+.hydrant__body { position: relative; font-size: clamp(20px, 6.5vw, 32px); }
+.art--hydrant--left .hydrant__body { transform: translateX(-90%); }
+.art--hydrant--right .hydrant__body { transform: translateX(90%); }
+
+/* motion: speed lines behind a vehicle that is actually moving */
+.art--moving { position: relative; }
+.art__motion {
+  position: absolute; left: 6%; top: 50%; width: 34%; height: 12px;
+  transform: translateY(-50%);
+  background: repeating-linear-gradient(90deg, #97a3b4 0 22%, transparent 22% 46%);
+  opacity: .85; border-radius: 2px;
+  animation: speedlines .6s linear infinite;
+}
+@keyframes speedlines { to { background-position-x: 14px; } }

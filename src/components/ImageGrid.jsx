@@ -72,8 +72,19 @@ function TileArt({ tile, color }) {
     return (
       <div className="art art--cross">
         <div className="art__stripes" />
+        {tile.attrs.occupied && <span className="art__occupant" title="on the crossing">🚚</span>}
         {tile.attrs.signal === 'dont' && <span className="signal signal--dont">✋ DON’T WALK</span>}
         {tile.attrs.signal === 'walk' && <span className="signal signal--walk">🚶 WALK</span>}
+      </div>
+    )
+  }
+  // A hydrant is only ever disqualified by WHICH SIDE of the pole it stands on,
+  // so the pole has to be visible for the rule to be learnable.
+  if (tile.cat === 'hydrant') {
+    return (
+      <div className={'art art--hydrant art--hydrant--' + tile.attrs.side}>
+        <span className="hydrant__pole" aria-hidden />
+        <span className="hydrant__body">🚨</span>
       </div>
     )
   }
@@ -89,5 +100,10 @@ function TileArt({ tile, color }) {
     )
   }
   const glyph = GLYPH[tile.attrs.kind] || '❔'
-  return <div className="art art--glyph"><span>{glyph}</span></div>
+  return (
+    <div className={'art art--glyph' + (tile.attrs.moving ? ' art--moving' : '')}>
+      {tile.attrs.moving && <span className="art__motion" aria-hidden />}
+      <span>{glyph}</span>
+    </div>
+  )
 }

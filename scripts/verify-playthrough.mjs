@@ -5,7 +5,7 @@ import {
   TIERS, tierAt, RIG_LIMIT, liveAttrs, STEAL_COUNT,
 } from '../src/game/engine.js'
 import { RULES } from '../src/game/rules.js'
-import { validateManifest, pickImage, HAS_IMAGE_PACK, REQUIRED_SIGNATURES, IMAGES } from '../src/game/images.manifest.js'
+import { validateManifest, pickImage, HAS_IMAGE_PACK, REQUIRED_SIGNATURES, IMAGES, variantOf } from '../src/game/images.manifest.js'
 
 let fail = 0
 const ok = (cond, msg) => { console.log((cond ? '  PASS ' : '  FAIL ') + msg); if (!cond) fail++ }
@@ -103,16 +103,18 @@ const man = validateManifest()
 ok(man.ok, man.ok ? 'manifest is self-consistent' : 'manifest errors: ' + man.errors.join('; '))
 const everySig = new Set()
 for (let t = 0; t < TIERS.length; t++) {
-  for (let n = 0; n < 100; n++) {
+  for (let n = 0; n < 200; n++) {
     for (const tile of generateChallenge(t).tiles) {
-      everySig.add(tile.cat === 'crosswalk' ? `crosswalk:${tile.attrs.signal}`
-        : tile.cat === 'light' ? `light:${tile.attrs.color}`
-        : `${tile.cat}:${tile.attrs.kind}`)
+      everySig.add(variantOf(tile, tile.attrs.color))
+      // dynamic lights also show their OTHER cycle state, which needs its own image
+      for (const c of tile.dynamic?.cycle || []) everySig.add(variantOf(tile, c))
     }
   }
 }
 const uncovered = [...everySig].filter((s) => !REQUIRED_SIGNATURES.includes(s))
-ok(uncovered.length === 0, uncovered.length ? `signatures with no manifest slot: ${uncovered.join(', ')}` : 'every generated tile signature has a manifest slot')
+ok(uncovered.length === 0, uncovered.length ? `signatures with no manifest slot: ${uncovered.join(', ')}` : `every generated tile signature (${everySig.size}) has a manifest slot`)
+const dead = REQUIRED_SIGNATURES.filter((s) => !everySig.has(s))
+ok(dead.length === 0, dead.length ? `manifest slots nothing ever generates: ${dead.join(', ')}` : 'no dead manifest slots')
 ok(HAS_IMAGE_PACK === Object.values(IMAGES).some((a) => a.length > 0), 'HAS_IMAGE_PACK reflects the manifest')
 if (!HAS_IMAGE_PACK) {
   const t = { cat: 'light', attrs: { color: 'red' } }

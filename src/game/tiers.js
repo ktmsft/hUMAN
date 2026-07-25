@@ -14,9 +14,9 @@
 // ---------------------------------------------------------------------------
 export const TIERS = [
   { id: 1, roman: 'I',   name: 'Basic Verification',       cols: 3, dynamic: false, period: 0,    rigged: false, pool: ['crosswalk', 'redLight', 'bus'] },
-  { id: 2, roman: 'II',  name: 'Enhanced Verification',    cols: 4, dynamic: false, period: 0,    rigged: false, pool: ['crosswalk', 'redLight', 'bus'] },
-  { id: 3, roman: 'III', name: 'Advanced Verification',    cols: 5, dynamic: true,  period: 1200, rigged: false, pool: ['redLightTimed', 'crosswalk'] },
-  { id: 4, roman: 'IV',  name: 'Adversarial Verification', cols: 6, dynamic: true,  period: 750,  rigged: true,  pool: ['redLightTimed', 'redOrWalk'] },
+  { id: 2, roman: 'II',  name: 'Enhanced Verification',    cols: 4, dynamic: false, period: 0,    rigged: false, pool: ['crosswalk', 'redLight', 'bus', 'hydrantLeft'] },
+  { id: 3, roman: 'III', name: 'Advanced Verification',    cols: 5, dynamic: true,  period: 1200, rigged: false, pool: ['redLightTimed', 'crosswalk', 'busMoving'] },
+  { id: 4, roman: 'IV',  name: 'Adversarial Verification', cols: 6, dynamic: true,  period: 750,  rigged: true,  pool: ['redLightTimed', 'redOrWalk', 'crosswalkClear'] },
 ]
 
 // Tier V is not in the array — it's the "unseen" tier, handled as the absurd

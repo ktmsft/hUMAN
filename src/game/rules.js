@@ -49,6 +49,31 @@ export const RULES = {
     test: (t) => (t.cat === 'light' && t.color === 'red') || (t.cat === 'crosswalk' && t.signal !== 'dont'),
     traps: ['light:green', 'crosswalk:dont'],
   },
+  // A parked bus is furniture. Motion is the tell.
+  busMoving: {
+    id: 'busMoving',
+    prompt: 'Select all buses that are actually moving',
+    hint: 'A parked bus is furniture. Only buses in motion count — and a shuttle van in motion is still not a bus.',
+    test: (t) => t.cat === 'vehicle' && t.kind === 'bus' && t.moving === true,
+    traps: ['vehicle:bus', 'vehicle:shuttle:moving', 'vehicle:car'],
+  },
+  // Spatial nuance: the same object, disqualified by which side of the pole it
+  // stands on. Nothing about the hydrant itself changes.
+  hydrantLeft: {
+    id: 'hydrantLeft',
+    prompt: 'Select every fire hydrant standing to the LEFT of its pole',
+    hint: 'Left of the pole, from where you are standing. Hydrants on the right side do not count.',
+    test: (t) => t.cat === 'hydrant' && t.side === 'left',
+    traps: ['hydrant:right'],
+  },
+  // Compound and situational: the crossing must be walkable AND unobstructed.
+  crosswalkClear: {
+    id: 'crosswalkClear',
+    prompt: 'Select all crosswalks with nothing standing on them',
+    hint: 'A vehicle sitting on the crossing means it is not clear. DON’T WALK crossings never count either.',
+    test: (t) => t.cat === 'crosswalk' && t.signal !== 'dont' && !t.occupied,
+    traps: ['crosswalk:none:occupied', 'crosswalk:dont'],
+  },
   // A late rule that quietly contradicts redLight — used by the "goalpost" steal.
   greenLight: {
     id: 'greenLight',
@@ -59,24 +84,29 @@ export const RULES = {
   },
 }
 
-// Build a concrete trap tile from a "cat:variant" trap key.
-import { crosswalk, light, vehicle } from './tiles.js'
+// Build a concrete trap tile from a trap key: "cat:variant" or "cat:variant:mod"
+// (e.g. "vehicle:shuttle:moving", "crosswalk:none:occupied").
+import { crosswalk, light, vehicle, hydrant } from './tiles.js'
 export function trapTile(key) {
-  const [cat, variant] = key.split(':')
-  if (cat === 'crosswalk') return crosswalk(variant)
+  const [cat, variant, mod] = key.split(':')
+  if (cat === 'crosswalk') return crosswalk(variant, mod === 'occupied')
   if (cat === 'light') return light(variant)
-  if (cat === 'vehicle') return vehicle(variant)
+  if (cat === 'vehicle') return vehicle(variant, mod === 'moving')
+  if (cat === 'hydrant') return hydrant(variant)
   return vehicle('car')
 }
 
 // Build a correct-by-construction tile for a rule (before dynamics kick in).
-import { crosswalk as xw, light as lt, vehicle as vh } from './tiles.js'
+import { crosswalk as xw, light as lt, vehicle as vh, hydrant as hy } from './tiles.js'
 export function correctTile(ruleId, dynamic = false) {
   switch (ruleId) {
     case 'crosswalk': return xw(Math.random() < 0.5 ? 'walk' : 'none')
     case 'redLight': return lt('red')
     case 'redLightTimed': return lt('red', dynamic)
-    case 'bus': return vh('bus')
+    case 'bus': return vh('bus', Math.random() < 0.5)
+    case 'busMoving': return vh('bus', true)
+    case 'hydrantLeft': return hy('left')
+    case 'crosswalkClear': return xw(Math.random() < 0.5 ? 'walk' : 'none', false)
     case 'redOrWalk': return Math.random() < 0.5 ? lt('red', dynamic) : xw(Math.random() < 0.5 ? 'walk' : 'none')
     case 'greenLight': return lt('green')
     default: return lt('red')

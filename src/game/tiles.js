@@ -17,8 +17,9 @@
 // and for dynamic tiles overrides the cycling attribute with its current value.
 // ---------------------------------------------------------------------------
 
-// crosswalk with a pedestrian signal state: 'none' | 'walk' | 'dont'
-export const crosswalk = (signal = 'none') => ({ cat: 'crosswalk', attrs: { signal } })
+// crosswalk with a pedestrian signal state: 'none' | 'walk' | 'dont'.
+// `occupied` = a vehicle is sitting on the crossing (it is then not "clear").
+export const crosswalk = (signal = 'none', occupied = false) => ({ cat: 'crosswalk', attrs: { signal, occupied } })
 
 // traffic light: color 'red' | 'yellow' | 'green'. dynamic=true cycles on a timer.
 export const light = (color = 'red', dynamic = false) =>
@@ -26,8 +27,12 @@ export const light = (color = 'red', dynamic = false) =>
     ? { cat: 'light', attrs: { color }, dynamic: { cycle: ['red', 'green'], period: 1100 } }
     : { cat: 'light', attrs: { color } }
 
-// vehicles: kind 'bus' | 'shuttle' | 'car' | 'bike' | 'moto'
-export const vehicle = (kind) => ({ cat: 'vehicle', attrs: { kind } })
+// vehicles: kind 'bus' | 'shuttle' | 'car' | 'bike' | 'moto'.
+// `moving` = in motion rather than parked (a parked bus is furniture).
+export const vehicle = (kind, moving = false) => ({ cat: 'vehicle', attrs: { kind, moving } })
+
+// fire hydrant, standing to the 'left' or 'right' of its pole
+export const hydrant = (side = 'right') => ({ cat: 'hydrant', attrs: { side } })
 
 // pure decoys with no path to correctness
 export const decoy = (kind) => ({ cat: 'decoy', attrs: { kind } })
@@ -49,5 +54,5 @@ export function liveAttrs(tile, liveColor) {
 // Decoy pools used to pad grids with plausible-but-wrong tiles.
 export const DECOY_TILES = [
   vehicle('car'), vehicle('bike'), vehicle('moto'),
-  decoy('hydrant'), decoy('tree'), decoy('building'), decoy('shop'), decoy('bench'),
+  hydrant('right'), decoy('tree'), decoy('building'), decoy('shop'), decoy('bench'),
 ]

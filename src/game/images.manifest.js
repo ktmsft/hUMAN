@@ -21,10 +21,18 @@
 //   light / red              → traffic light, RED lamp lit
 //   light / yellow           → traffic light, YELLOW lamp lit                  [TRAP]
 //   light / green            → traffic light, GREEN lamp lit                   [TRAP]
-//   vehicle / bus            → a full-size city/school bus
-//   vehicle / shuttle        → a small shuttle van (NOT a bus)                 [TRAP]
+//   crosswalk / none:occupied→ same, with a vehicle stopped ON the crossing    [TRAP]
+//   vehicle / bus            → a full-size city/school bus, PARKED at a kerb
+//   vehicle / bus:moving     → the same bus mid-motion (blur, open road)
+//   vehicle / shuttle        → a small shuttle van, parked (NOT a bus)         [TRAP]
+//   vehicle / shuttle:moving → the same van mid-motion                         [TRAP]
 //   vehicle / car|bike|moto  → decoys
-//   decoy / hydrant|tree|building|shop|bench → decoys
+//   hydrant / left           → fire hydrant standing LEFT of a visible pole
+//   hydrant / right          → the same hydrant standing RIGHT of the pole     [TRAP]
+//   decoy / tree|building|shop|bench → decoys
+//
+// The pole must be clearly visible in BOTH hydrant shots — the side is the whole
+// rule. Likewise a parked bus must read as parked: no motion blur, no open road.
 //
 // For DYNAMIC lights we need the SAME pole in red AND green so the tile can
 // cross-fade between them on a timer — generate them as a matched pair.
@@ -39,15 +47,20 @@ export const IMAGES = {
   'crosswalk:none': [],
   'crosswalk:walk': [],
   'crosswalk:dont': [],
+  'crosswalk:none:occupied': [],   // a vehicle stopped on the crossing          [TRAP]
   'light:red': [],
   'light:yellow': [],
   'light:green': [],
-  'vehicle:bus': [],
+  'vehicle:bus': [],               // parked
+  'vehicle:bus:moving': [],
   'vehicle:shuttle': [],
+  'vehicle:shuttle:moving': [],
   'vehicle:car': [],
   'vehicle:bike': [],
   'vehicle:moto': [],
-  'decoy:hydrant': [], 'decoy:tree': [], 'decoy:building': [], 'decoy:shop': [], 'decoy:bench': [],
+  'hydrant:left': [],              // hydrant standing LEFT of its pole
+  'hydrant:right': [],             // ...and right of it                          [TRAP]
+  'decoy:tree': [], 'decoy:building': [], 'decoy:shop': [], 'decoy:bench': [],
 }
 
 // ---------------------------------------------------------------------------
@@ -62,12 +75,7 @@ export const MANIFEST = []
 
 // Every signature the tile generators can produce. IMAGES must cover all of them
 // (an empty array is fine — that signature just renders placeholder art).
-export const REQUIRED_SIGNATURES = [
-  'crosswalk:none', 'crosswalk:walk', 'crosswalk:dont',
-  'light:red', 'light:yellow', 'light:green',
-  'vehicle:bus', 'vehicle:shuttle', 'vehicle:car', 'vehicle:bike', 'vehicle:moto',
-  'decoy:hydrant', 'decoy:tree', 'decoy:building', 'decoy:shop', 'decoy:bench',
-]
+export const REQUIRED_SIGNATURES = Object.keys(IMAGES)
 
 export function validateManifest() {
   const errors = []
@@ -99,9 +107,15 @@ export function validateManifest() {
   return { ok: errors.length === 0, errors }
 }
 
-function variantOf(tile, liveColor) {
-  if (tile.cat === 'crosswalk') return `crosswalk:${tile.attrs.signal}`
+// A tile's attribute signature. Anything a RULE can read has to appear here, or
+// two visually different tiles would share one image slot and the pack would lie.
+export function variantOf(tile, liveColor) {
+  if (tile.cat === 'crosswalk') {
+    return `crosswalk:${tile.attrs.signal}` + (tile.attrs.occupied ? ':occupied' : '')
+  }
   if (tile.cat === 'light') return `light:${liveColor || tile.attrs.color}`
+  if (tile.cat === 'hydrant') return `hydrant:${tile.attrs.side}`
+  if (tile.cat === 'vehicle') return `vehicle:${tile.attrs.kind}` + (tile.attrs.moving ? ':moving' : '')
   return `${tile.cat}:${tile.attrs.kind}`
 }
 
