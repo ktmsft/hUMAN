@@ -8,7 +8,7 @@ import SliderCaptcha from './SliderCaptcha.jsx'
 // mutates the look act-by-act: captcha → form → terms-of-service → summons.
 export default function CaptchaFrame({ round, chrome, botProbability, children, onVerify }) {
   const has = (k) => round.sabotage?.includes(k)
-  const skin = chrome ?? { key: 'captcha', badge: 'hCROSSWALK™ · Security Check', verify: 'Verify' }
+  const skin = chrome ?? { key: 'captcha', badge: 'hUMAN™ · Security Check', verify: 'Verify' }
   const [faded, setFaded] = useState(false)
   const [seconds, setSeconds] = useState(30)
   const [btnSelected, setBtnSelected] = useState(false) // SELECT_ALL_VERIFY gag

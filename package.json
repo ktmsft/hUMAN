@@ -3,11 +3,12 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "An increasingly absurd CAPTCHA joke game / scammer tarpit.",
+  "description": "A CAPTCHA you can almost win. An increasingly absurd joke game / scammer tarpit.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "verify": "node scripts/verify-playthrough.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",

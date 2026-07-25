@@ -27,7 +27,7 @@ export default function EndCard({ roundsSurvived, botProb, onContinue, onRestart
     const url = renderCertificatePng({ roundsSurvived, botProb, serial })
     const a = document.createElement('a')
     a.href = url
-    a.download = `hcrosswalk-certificate-${serial}.png`
+    a.download = `human-certificate-${serial}.png`
     document.body.appendChild(a)
     a.click()
     a.remove()
@@ -42,7 +42,7 @@ export default function EndCard({ roundsSurvived, botProb, onContinue, onRestart
         <div className="endcard__kicker">CERTIFICATE OF VERIFICATION</div>
         <h1 className="endcard__title">You are a Robot.</h1>
         <p className="endcard__body">
-          After <b>{roundsSurvived}</b> challenges, hCROSSWALK™ has concluded, with
+          After <b>{roundsSurvived}</b> challenges, hUMAN™ has concluded, with
           <b> {botProb}%</b> confidence, that the entity at this keyboard is not, and
           has never been, human. This finding is final and also completely made up.
         </p>
@@ -97,7 +97,7 @@ function renderCertificatePng({ roundsSurvived, botProb, serial }) {
   ctx.fillStyle = '#3a3f48'
   ctx.font = '19px system-ui, sans-serif'
   const body =
-    `After ${roundsSurvived} challenges, hCROSSWALK™ has concluded, with ${botProb}% confidence, ` +
+    `After ${roundsSurvived} challenges, hUMAN™ has concluded, with ${botProb}% confidence, ` +
     `that the entity at this keyboard is not, and has never been, human. ` +
     `This finding is final and also completely made up.`
   wrapText(ctx, body, W / 2, 300, W - 180, 28)
@@ -113,7 +113,7 @@ function renderCertificatePng({ roundsSurvived, botProb, serial }) {
   // footer
   ctx.fillStyle = '#a07c1e'
   ctx.font = '700 13px system-ui, sans-serif'
-  withLetterSpacing(ctx, 3, () => ctx.fillText('hCROSSWALK™ · VERIFICATION AUTHORITY', W / 2, 540))
+  withLetterSpacing(ctx, 3, () => ctx.fillText('hUMAN™ · VERIFICATION AUTHORITY', W / 2, 540))
   ctx.fillStyle = '#8a94a3'
   ctx.font = 'italic 13px system-ui, sans-serif'
   ctx.fillText('Nothing here was stored or transmitted. Not even this certificate believes in itself.', W / 2, 566)

@@ -278,3 +278,75 @@ body {
 }
 .ghost-btn:hover { background: #e2e8f1; }
 .endcard__foot { font-size: 11.5px; color: #8a94a3; margin-top: 14px; }
+
+/* ===== tier-loop UI: image tiles, ladder, streak HUD, verdict toasts ===== */
+/* ---- image-grid tile art (placeholder / concept art) -------------------- */
+.img-grid .tile { background: #dfe4ea; overflow: hidden; padding: 0; }
+.art { width: 100%; height: 100%; display: grid; place-items: center; position: relative; }
+.art--img { object-fit: cover; }
+.art--glyph { background: #eef2f7; font-size: clamp(26px, 8vw, 42px); }
+
+/* crosswalk: asphalt + zebra stripes, optional signal badge */
+.art--cross { background: #40454c; }
+.art__stripes {
+  position: absolute; inset: 18% 8%;
+  background: repeating-linear-gradient(90deg, #eef1f4 0 12%, transparent 12% 24%);
+  transform: perspective(120px) rotateX(32deg);
+}
+.signal {
+  position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%);
+  font-size: 9px; font-weight: 800; letter-spacing: .02em; padding: 2px 5px;
+  border-radius: 4px; white-space: nowrap;
+}
+.signal--dont { background: #c0392b; color: #fff; }
+.signal--walk { background: #1f8b4c; color: #fff; }
+
+/* traffic light housing with three lamps */
+.art--light { background: #2b3038; }
+.lamp-housing {
+  background: #14171c; padding: 6px 5px; border-radius: 7px; display: grid; gap: 4px;
+  box-shadow: inset 0 0 0 2px #3a4049;
+}
+.lamp { width: 15px; height: 15px; border-radius: 50%; opacity: .16; }
+.lamp--red { background: #ff3b3b; }
+.lamp--yellow { background: #ffcf3b; }
+.lamp--green { background: #37d67a; }
+.lamp.on { opacity: 1; box-shadow: 0 0 9px currentColor; }
+.lamp--red.on { color: #ff3b3b; }
+.lamp--yellow.on { color: #ffcf3b; }
+.lamp--green.on { color: #37d67a; }
+
+.img-grid--flash { animation: rig-flash .45s ease-out; }
+@keyframes rig-flash {
+  0% { box-shadow: 0 0 0 0 rgba(255,77,109,.0); }
+  30% { box-shadow: 0 0 0 4px rgba(255,77,109,.8); filter: hue-rotate(-20deg); }
+  100% { box-shadow: 0 0 0 0 rgba(255,77,109,0); }
+}
+
+/* ---- tier ladder -------------------------------------------------------- */
+.ladder { display: flex; align-items: center; gap: 6px; margin: 2px 2px 8px; }
+.rung {
+  min-width: 30px; height: 26px; padding: 0 8px; display: grid; place-items: center;
+  border: 1px solid #2a3342; border-radius: 6px; color: #7d8aa0; font-size: 12px;
+  font-weight: 700; letter-spacing: .04em;
+}
+.rung--done { color: #37d67a; border-color: #2e7d4f88; background: #14251b; }
+.rung--now { color: #fff; border-color: var(--brand); background: #16324f; box-shadow: 0 0 10px #2f7de155; }
+.rung--locked { margin-left: auto; color: #b06; border-color: #5a2540; background: #2a1420; }
+.rung--locked.rung--now { color: #ff6b9d; border-color: #ff4d6d; background: #33131f; box-shadow: 0 0 10px #ff4d6d55; }
+
+/* ---- streak HUD --------------------------------------------------------- */
+.hud {
+  display: flex; align-items: center; gap: 10px; margin: 4px 2px 10px;
+  color: #aeb6c2; font-size: 13px;
+}
+.hud__label { text-transform: uppercase; letter-spacing: .12em; font-size: 11px; opacity: .8; }
+.hud__dots { display: flex; gap: 6px; }
+.dot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid #47506088; background: transparent; }
+.dot--on { background: #37d67a; border-color: #37d67a; box-shadow: 0 0 8px #37d67a88; }
+.hud__count { color: #cdd8ea; font-weight: 600; }
+.hud__stage { margin-left: auto; color: #7d8aa0; font-size: 12px; }
+
+.toast--pass { border-color: #2e7d4f; background: #17281d; }
+.toast--fail { border-color: #7a3b3b; background: #281a1a; }
+.toast--steal { border-color: #8a6d1e; background: #2a2413; }
