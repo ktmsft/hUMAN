@@ -16,6 +16,15 @@ import { setMuted, isMuted, playDenied } from './game/sound.js'
 const SHOW_DEV = import.meta.env.DEV
 const TARGET = 3 // "3 in a row" to graduate a tier
 
+// How long a verdict stays up. The verdicts ARE the joke, so a fixed timeout
+// either rushed the long ones or dragged out "Correct. 1 of 3." Scale with the
+// length of the line instead: a floor, ~270ms per word, and a ceiling so nothing
+// stalls. Impatient players can click the toast to dismiss it early.
+function readMs(text, floor = 2600, cap = 9000) {
+  const words = String(text ?? '').trim().split(/\s+/).filter(Boolean).length
+  return Math.min(cap, Math.max(floor, 900 + words * 270))
+}
+
 export default function App() {
   const [started, setStarted] = useState(false)
   const [tierIndex, setTierIndex] = useState(0)
@@ -32,8 +41,27 @@ export default function App() {
   const [ended, setEnded] = useState(false)
   const [muted, setMutedState] = useState(isMuted())
   const liveRef = useRef({ selected: new Set(), live: [] })
+  const timerRef = useRef(null)
+  const advanceRef = useRef(null)
 
   const inAbsurd = absurdIndex >= 0
+
+  // Every verdict schedules what happens after it. Keeping the pending step in a
+  // ref lets a click on the toast run it immediately instead of waiting out the
+  // timer — long verdicts can be generous without punishing a repeat player.
+  function scheduleAdvance(fn, ms) {
+    clearTimeout(timerRef.current)
+    advanceRef.current = fn
+    timerRef.current = setTimeout(() => { advanceRef.current = null; fn() }, ms)
+  }
+  function skipToast() {
+    if (!advanceRef.current) return
+    clearTimeout(timerRef.current)
+    const fn = advanceRef.current
+    advanceRef.current = null
+    fn()
+  }
+  useEffect(() => () => clearTimeout(timerRef.current), [])
   // ImageGrid reports { selected, live }; the older grids report a bare selection.
   const onImageChange = useCallback((p) => { liveRef.current = p }, [])
   const onGenericChange = useCallback((sel) => { liveRef.current = { selected: sel, live: [] } }, [])
@@ -53,11 +81,11 @@ export default function App() {
     if (inAbsurd) {
       const r = round
       setToast({ msg: r.verdict, kind: 'fail' }); bump(6)
-      setTimeout(() => {
+      scheduleAdvance(() => {
         setToast(null); setBusy(false)
         if (r.final) { setEnded(true); return }
         enterAbsurd(absurdIndex + 1)
-      }, 1700)
+      }, readMs(r.verdict))
       return
     }
 
@@ -71,15 +99,15 @@ export default function App() {
     if (tier.rigged && res.passed && streak >= TARGET - 1) {
       const s = steal(stealCount)
       setFlash(true); setToast({ msg: s.message, kind: 'steal' }); bump(7)
-      setTimeout(() => {
+      scheduleAdvance(() => {
         setFlash(false); setToast(null); setBusy(false)
         const sc = stealCount + 1
         setStealCount(sc); setStreak(0)
         if (sc >= RIG_LIMIT) { // give up on the human → Tier V
           setToast({ msg: RECLASSIFY.message, kind: 'steal' })
-          setTimeout(() => { setToast(null); enterAbsurd(0) }, 2600)
+          scheduleAdvance(() => { setToast(null); enterAbsurd(0) }, readMs(RECLASSIFY.message, 3400))
         } else newRound(tierIndex)
-      }, 2100)
+      }, readMs(s.message, 3000))
       return
     }
 
@@ -87,25 +115,29 @@ export default function App() {
       const ns = streak + 1
       if (ns >= TARGET) { // GRADUATE a winnable tier
         bump(1)
-        setToast({ msg: gradMessage(tierIndex), kind: 'pass' })
-        setTimeout(() => {
+        const msg = gradMessage(tierIndex)
+        setToast({ msg, kind: 'pass' })
+        scheduleAdvance(() => {
           setToast(null); setBusy(false); setStreak(0)
           const nt = tierIndex + 1
           setTierIndex(nt); newRound(nt)
-        }, 2000)
+        }, readMs(msg, 2800))
       } else {
         setStreak(ns); bump(2)
+        // A progress ping, not a joke — keep it brisk so the loop stays tight.
         setToast({ msg: `Correct. ${ns} of ${TARGET}. Keep the streak alive…`, kind: 'pass' })
-        setTimeout(() => { setToast(null); setBusy(false); newRound(tierIndex) }, 1250)
+        scheduleAdvance(() => { setToast(null); setBusy(false); newRound(tierIndex) }, 1500)
       }
       return
     }
 
-    // honest miss — reveal the rule so it stays fair
+    // honest miss — reveal the rule so it stays fair. The hint is the teaching
+    // moment, so it gets full reading time.
     setStreak(0); bump(3)
     const why = res.wrong > 0 ? 'You selected something that didn’t qualify.' : 'You missed one.'
-    setToast({ msg: `Not quite. ${why} ${round.hint} Streak reset.`, kind: 'fail' })
-    setTimeout(() => { setToast(null); setBusy(false); newRound(tierIndex) }, 2100)
+    const msg = `Not quite. ${why} ${round.hint} Streak reset.`
+    setToast({ msg, kind: 'fail' })
+    scheduleAdvance(() => { setToast(null); setBusy(false); newRound(tierIndex) }, readMs(msg, 3200))
   }
 
   function restart() {
@@ -167,7 +199,17 @@ export default function App() {
         <p className="fineprint">By continuing you agree that you will never prove you are human.</p>
       </main>
 
-      {toast && <div className={'toast toast--' + toast.kind}>{toast.msg}</div>}
+      {toast && (
+        <div
+          className={'toast toast--' + toast.kind}
+          onClick={skipToast}
+          role="status"
+          title="Click to continue"
+        >
+          {toast.msg}
+          <span className="toast__skip">click to continue</span>
+        </div>
+      )}
 
       {ended && <EndCard roundsSurvived={faced} botProb={botProb} onContinue={continueEndless} onRestart={restart} />}
 

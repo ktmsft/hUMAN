@@ -236,8 +236,17 @@ body {
   background: #1b2130; color: #fff; border: 1px solid #33405a; max-width: 440px;
   padding: 12px 16px; border-radius: 10px; box-shadow: 0 12px 40px rgba(0,0,0,.5);
   font-size: 14px; text-align: center; animation: pop .2s ease-out;
+  cursor: pointer; line-height: 1.5;
 }
 @keyframes pop { from { transform: translate(-50%, 8px); opacity: 0; } }
+
+/* Verdicts stay up long enough to read; this is the escape hatch for anyone who
+   has already read them. Quiet until you look for it. */
+.toast__skip {
+  display: block; margin-top: 7px; font-size: 10.5px; letter-spacing: .08em;
+  text-transform: uppercase; color: #ffffff66;
+}
+.toast:hover .toast__skip { color: #ffffffaa; }
 
 /* ---- dev panel ---------------------------------------------------------- */
 .dev {

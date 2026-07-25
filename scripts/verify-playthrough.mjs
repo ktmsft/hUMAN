@@ -4,8 +4,9 @@ import {
   generateChallenge, evaluate, steal, getAbsurd, chromeFor, ABSURD_COUNT,
   TIERS, tierAt, RIG_LIMIT, liveAttrs, STEAL_COUNT,
 } from '../src/game/engine.js'
+import { readdir } from 'node:fs/promises'
 import { RULES } from '../src/game/rules.js'
-import { validateManifest, pickImage, HAS_IMAGE_PACK, REQUIRED_SIGNATURES, IMAGES, variantOf } from '../src/game/images.manifest.js'
+import { validateManifest, pickImage, HAS_IMAGE_PACK, REQUIRED_SIGNATURES, IMAGES, variantOf, PROMPTS, signatureFromFilename } from '../src/game/images.manifest.js'
 
 let fail = 0
 const ok = (cond, msg) => { console.log((cond ? '  PASS ' : '  FAIL ') + msg); if (!cond) fail++ }
@@ -119,6 +120,31 @@ ok(HAS_IMAGE_PACK === Object.values(IMAGES).some((a) => a.length > 0), 'HAS_IMAG
 if (!HAS_IMAGE_PACK) {
   const t = { cat: 'light', attrs: { color: 'red' } }
   ok(pickImage(t, 'red') === null, 'with no pack registered, tiles fall back to placeholder art')
+}
+ok(REQUIRED_SIGNATURES.every((s) => PROMPTS[s]), 'every signature has a generation prompt')
+
+// The app discovers the pack through Vite's import.meta.glob, which doesn't exist
+// under plain Node — so read the drop folder off disk and apply the same rules.
+// Without this, a mislabelled filename would only surface as a silently missing
+// image in the browser.
+console.log('\n[8] image pack on disk')
+const TILES = new URL('../src/assets/tiles/', import.meta.url)
+let files = []
+try {
+  files = (await readdir(TILES)).filter((f) => /\.(jpe?g|png|webp)$/i.test(f))
+} catch { /* folder may not exist yet */ }
+if (files.length === 0) {
+  console.log('  (no images dropped yet — placeholder art is in use; nothing to check)')
+} else {
+  const bad = files.filter((f) => !REQUIRED_SIGNATURES.includes(signatureFromFilename(f)))
+  ok(bad.length === 0, bad.length ? `filenames that match no signature: ${bad.join(', ')}` : `all ${files.length} filenames map to a known signature`)
+  const count = (sig) => files.filter((f) => signatureFromFilename(f) === sig).length
+  ok(count('light:red') === count('light:green'), `light:red (${count('light:red')}) and light:green (${count('light:green')}) are matched pairs`)
+  const covered = REQUIRED_SIGNATURES.filter((s) => count(s) > 0)
+  console.log(`  ${covered.length}/${REQUIRED_SIGNATURES.length} signatures have photos; the rest still use placeholder art`)
+  for (const sig of covered) {
+    if (count(sig) < 3) console.log(`  note: ${sig} has only ${count(sig)} image(s) — grids may look repetitive`)
+  }
 }
 
 console.log(fail === 0 ? '\nALL CHECKS PASSED' : `\n${fail} CHECK(S) FAILED`)

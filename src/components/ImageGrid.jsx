@@ -52,7 +52,7 @@ export default function ImageGrid({ round, flash, onChange }) {
           onClick={() => toggle(i)}
           aria-pressed={selected.has(i)}
         >
-          <TileArt tile={t} color={colorOf(t, i)} />
+          <TileArt tile={t} color={colorOf(t, i)} seed={i} />
           {selected.has(i) && <span className="tile__check">✓</span>}
         </button>
       ))}
@@ -62,11 +62,13 @@ export default function ImageGrid({ round, flash, onChange }) {
 
 // Concept-accurate placeholder art. Replace with <img src={tile.src}/> when the
 // generated image pack lands — attributes/rules are unchanged.
-function TileArt({ tile, color }) {
-  // When a generated image pack is registered in images.manifest.js this returns a
+function TileArt({ tile, color, seed = 0 }) {
+  // When a generated image pack is present in src/assets/tiles/ this returns a
   // src and we render the real photo; otherwise we fall back to placeholder art.
-  const src = tile.src ?? pickImage(tile, color)
-  if (src) return <img className="art art--img" src={src} alt="" />
+  // `seed` is the tile's grid position, so two tiles of the same category in one
+  // grid draw different photos from the pool instead of repeating.
+  const src = tile.src ?? pickImage(tile, color, seed)
+  if (src) return <img className="art art--img" src={src} alt="" loading="lazy" />
 
   if (tile.cat === 'crosswalk') {
     return (
